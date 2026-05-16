@@ -1,0 +1,132 @@
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* ── Header ── */
+header{padding:14px 20px 10px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.chamber-label{font-size:16px;font-weight:600;color:#f0f6fc}
+.chamber-sub{font-size:11px;color:#8b949e;margin-top:2px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-left:auto}
+.btn-group{display:flex;border:1px solid #30363d;border-radius:6px;overflow:hidden}
+.btn-group button{background:#161b22;color:#8b949e;border:none;border-right:1px solid #30363d;padding:5px 13px;font-size:12px;cursor:pointer;transition:all .15s}
+.btn-group button:last-child{border-right:none}
+.btn-group button:hover{background:#21262d;color:#e6edf3}
+.btn-group button.active{background:#1f6feb;color:#fff}
+.score-select{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer}
+.search-wrap{position:relative}
+.search-input{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:5px 10px 5px 28px;font-size:12px;width:160px;outline:none}
+.search-input:focus{border-color:#1f6feb}
+.search-icon{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#6e7681;font-size:12px;pointer-events:none}
+.method-btn{background:none;border:1px solid #30363d;color:#8b949e;padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer}
+.method-btn:hover{color:#e6edf3;border-color:#8b949e}
+.refresh-badge{font-size:10px;color:#6e7681;padding:4px 8px;background:#161b22;border:1px solid #21262d;border-radius:4px;white-space:nowrap}
+
+/* ── Stats bar ── */
+.stats-bar{display:flex;gap:20px;padding:8px 20px;border-bottom:1px solid #21262d;background:#0d1117;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;align-items:center}
+.stat-val{font-size:16px;font-weight:700;color:#f0f6fc}
+.stat-val.blue{color:#4493f8}
+.stat-val.red{color:#f85149}
+.stat-lbl{font-size:10px;color:#6e7681;margin-top:1px}
+
+/* ── Layout ── */
+.layout{display:flex;height:calc(100vh - 115px);overflow:hidden}
+#chart-container{flex:1;overflow-y:auto;overflow-x:hidden;position:relative;padding-bottom:8px}
+#chart{display:block;width:100%}
+
+/* ── Power balance bar ── */
+.power-bar-wrap{padding:6px 20px 4px;border-top:1px solid #21262d}
+.power-bar-labels{display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px}
+.power-bar-track{height:18px;background:#21262d;border-radius:9px;overflow:hidden;border:1px solid #30363d;position:relative}
+.power-bar-dem{height:100%;background:linear-gradient(90deg,#1a56db,#4493f8);border-radius:9px 0 0 9px;position:absolute;left:0;transition:width .4s}
+.power-bar-rep{height:100%;background:linear-gradient(90deg,#f85149,#dc2626);border-radius:0 9px 9px 0;position:absolute;right:0;transition:width .4s}
+.power-bar-center{position:absolute;left:50%;top:0;bottom:0;width:1px;background:#30363d}
+#power-bar-label{font-size:10px;color:#8b949e;text-align:center;margin-top:3px}
+
+/* ── Side panel ── */
+.side-panel{width:290px;min-width:290px;background:#161b22;border-left:1px solid #21262d;overflow-y:auto;display:flex;flex-direction:column;gap:0}
+.panel-section{padding:14px;border-bottom:1px solid #21262d}
+.panel-section h3{font-size:11px;font-weight:600;color:#6e7681;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+
+/* ── Member card ── */
+.member-card .mc-name{font-size:14px;font-weight:600;color:#f0f6fc;margin-bottom:3px}
+.member-card .mc-meta{font-size:11px;color:#8b949e;margin-bottom:10px}
+.member-card .mc-role{font-size:11px;color:#f97316;font-weight:600;margin-bottom:8px}
+
+.score-pos-wrap{margin:8px 0 10px}
+.score-pos-track{height:8px;background:#21262d;border-radius:4px;position:relative;margin-top:4px}
+.score-pos-fill-l{height:100%;background:#4493f8;border-radius:4px 0 0 4px;position:absolute;left:0}
+.score-pos-fill-r{height:100%;background:#f85149;border-radius:0 4px 4px 0;position:absolute;right:0}
+.score-pos-marker{width:3px;height:12px;background:#f0f6fc;border-radius:2px;position:absolute;top:-2px;transform:translateX(-50%)}
+.score-pos-labels{display:flex;justify-content:space-between;font-size:9px;color:#6e7681;margin-top:3px}
+
+.source-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+.src-item{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:7px 9px}
+.src-label{font-size:9px;color:#6e7681;text-transform:uppercase;letter-spacing:.3px}
+.src-val{font-size:13px;font-weight:600;color:#e6edf3;margin-top:2px}
+.src-weight{font-size:9px;color:#6e7681;margin-top:1px}
+
+.consistency-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding:6px 8px;background:#0d1117;border:1px solid #21262d;border-radius:6px}
+.consistency-bar-track{flex:1;height:5px;background:#21262d;border-radius:3px;overflow:hidden}
+.consistency-bar-fill{height:100%;border-radius:3px;transition:width .3s}
+.consistency-label{font-size:10px;color:#8b949e;white-space:nowrap}
+
+.history-btn{width:100%;margin-top:10px;background:#21262d;border:1px solid #30363d;color:#8b949e;padding:6px;border-radius:6px;font-size:11px;cursor:pointer}
+.history-btn:hover{background:#1f6feb22;border-color:#1f6feb;color:#58a6ff}
+
+/* ── History panel ── */
+.history-panel{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:12px;margin-top:10px}
+.h-title{font-size:12px;font-weight:600;color:#8b949e;margin-bottom:8px}
+.h-meta{font-size:10px;color:#6e7681;margin-top:6px;line-height:1.6}
+
+/* ── Divergence list ── */
+.div-item{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 10px;cursor:pointer;margin-bottom:5px}
+.div-item:hover{border-color:#30363d}
+.div-item:last-child{margin-bottom:0}
+.di-name{font-size:12px;font-weight:600;color:#e6edf3}
+.di-meta{font-size:10px;color:#8b949e;margin-top:2px}
+
+/* ── Tooltip ── */
+#tooltip{position:fixed;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:10px 14px;font-size:12px;pointer-events:none;z-index:1000;max-width:240px;box-shadow:0 4px 20px rgba(0,0,0,.5);display:none}
+.tt-name{font-weight:600;color:#f0f6fc;margin-bottom:4px}
+.tt-meta{color:#8b949e;font-size:11px;margin-bottom:5px}
+.tt-row{display:flex;justify-content:space-between;font-size:11px;padding:1px 0}
+.tt-key{color:#8b949e}
+.tt-val{color:#e6edf3;font-weight:500}
+.tt-weights{font-size:10px;color:#6e7681;margin-top:5px;border-top:1px solid #21262d;padding-top:4px}
+
+/* ── Methodology modal ── */
+.method-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center}
+.method-modal.open{display:flex}
+.method-content{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;max-width:580px;width:90%;max-height:82vh;overflow-y:auto}
+.method-content h2{font-size:16px;font-weight:600;margin-bottom:16px}
+.method-content h3{font-size:13px;font-weight:600;color:#58a6ff;margin:16px 0 6px}
+.method-content h4{font-size:12px;font-weight:600;color:#8b949e;margin:10px 0 4px}
+.method-content p{font-size:12px;color:#8b949e;line-height:1.65;margin-bottom:8px}
+.method-content strong{color:#e6edf3}
+.method-content table{width:100%;border-collapse:collapse;font-size:11px;margin:8px 0}
+.method-content th{text-align:left;color:#6e7681;padding:4px 8px;border-bottom:1px solid #21262d}
+.method-content td{padding:4px 8px;color:#8b949e;border-bottom:1px solid #161b22}
+.method-content td:first-child{color:#e6edf3}
+.close-btn{float:right;background:none;border:none;color:#8b949e;font-size:22px;cursor:pointer;line-height:1}
+.close-btn:hover{color:#e6edf3}
+
+/* ── Mobile ── */
+#mobile-member-card{display:none}
+@media(max-width:768px){
+  .side-panel{display:none}
+  .stats-bar{gap:10px;padding:6px 12px}
+  .stat-val{font-size:14px}
+  .controls{gap:6px}
+  .search-input{width:120px}
+  #mobile-member-card{display:block;padding:14px;border-top:1px solid #21262d;background:#0d1117}
+}
+
+/* ── Member roster ── */
+.roster-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;border:1px solid transparent}
+.roster-item:hover{background:#21262d;border-color:#30363d}
+.roster-item.selected{background:#1f6feb18;border-color:#1f6feb55}
+.roster-swatch{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.roster-name{font-size:12px;color:#e6edf3;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.roster-meta{font-size:10px;color:#6e7681;white-space:nowrap}
+.roster-score{font-size:11px;font-weight:600;color:#8b949e;white-space:nowrap;font-variant-numeric:tabular-nums}
+#roster-search:focus{border-color:#1f6feb}

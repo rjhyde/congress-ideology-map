@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.log
+lib/__pycache__/
+static/data/
+*.stub

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Congress Ideology Map — 119th Congress</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="chamber-label" id="chamber-label">House of Representatives</div>
+    <div class="chamber-sub" id="chamber-sub">435 seats · left = most liberal, right = most conservative</div>
+  </div>
+  <div class="controls">
+    <div class="btn-group">
+      <button id="btn-house" class="active" onclick="switchChamber('house')">House</button>
+      <button id="btn-senate" onclick="switchChamber('senate')">Senate</button>
+    </div>
+    <select class="score-select" id="score-select" onchange="switchScore(this.value)">
+      <option value="enhanced">Composite Score (adaptive weights)</option>
+      <option value="nominate">DW-NOMINATE Only</option>
+      <option value="govtrack">GovTrack Only</option>
+      <option value="heritage">Heritage Action Only</option>
+      <option value="lcv">LCV Environmental Only</option>
+      <option value="fec">FEC Finance Only</option>
+    </select>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="search-input" type="text" placeholder="Search members…" oninput="onSearch(this.value)">
+    </div>
+    <button class="method-btn" onclick="document.getElementById('method-modal').classList.add('open')">ℹ Methodology</button>
+    <span class="refresh-badge" id="refresh-badge">Loading…</span>
+  </div>
+</header>
+
+<div class="stats-bar" id="stats-bar">
+  <div class="stat"><span class="stat-val" id="st-total">—</span><span class="stat-lbl">Members</span></div>
+  <div class="stat"><span class="stat-val blue" id="st-dem">—</span><span class="stat-lbl">Democrats</span></div>
+  <div class="stat"><span class="stat-val red" id="st-rep">—</span><span class="stat-lbl">Republicans</span></div>
+  <div class="stat"><span class="stat-val" id="st-avg-dem">—</span><span class="stat-lbl">Avg Dem Score</span></div>
+  <div class="stat"><span class="stat-val" id="st-avg-rep">—</span><span class="stat-lbl">Avg Rep Score</span></div>
+  <div class="stat"><span class="stat-val" id="st-sources">—</span><span class="stat-lbl">Avg Sources</span></div>
+</div>
+
+<div class="layout">
+  <div id="chart-container">
+    <svg id="chart"></svg>
+
+    <!-- Mobile member card -->
+    <div id="mobile-member-card"></div>
+  </div>
+
+  <div class="side-panel" id="side-panel">
+    <div class="panel-section" id="member-detail-section">
+      <h3>Member Detail</h3>
+      <p style="font-size:12px;color:#6e7681">Click any seat to see details.</p>
+    </div>
+    <div class="panel-section" id="history-section" style="display:none"></div>
+    <div class="panel-section" style="flex:1;display:flex;flex-direction:column;min-height:0">
+      <h3>All Members</h3>
+      <div style="position:relative;margin-bottom:8px">
+        <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:#6e7681;font-size:12px;pointer-events:none">🔍</span>
+        <input id="roster-search" type="text" placeholder="Name or state…"
+          style="width:100%;background:#0d1117;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:5px 8px 5px 26px;font-size:12px;outline:none"
+          oninput="filterRoster(this.value)">
+      </div>
+      <div id="member-roster" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:3px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<div class="method-modal" id="method-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="method-content">
+    <button class="close-btn" onclick="document.getElementById('method-modal').classList.remove('open')">×</button>
+    <h2>Methodology</h2>
+    <h3>Data Sources</h3>
+    <table>
+      <tr><th>Source</th><th>What it measures</th><th>Coverage</th><th>Weight</th></tr>
+      <tr><td>VoteView DW-NOMINATE</td><td>Roll-call vote patterns (UCLA)</td><td>100%</td><td>40%</td></tr>
+      <tr><td>GovTrack Ideology</td><td>Bill sponsorship network</td><td>~99%</td><td>35%</td></tr>
+      <tr><td>Heritage Action</td><td>Conservative org scorecard</td><td>~97%</td><td>2.7% Dems / 17.3% Reps</td></tr>
+      <tr><td>LCV Environmental</td><td>Pro-environment voting record</td><td>~78%</td><td>13.6% Dems / 2.8% Reps</td></tr>
+      <tr><td>FEC Campaign Finance</td><td>Fundraising patterns</td><td>~24%</td><td>8% (when available)</td></tr>
+    </table>
+    <h3>Adaptive Weights</h3>
+    <p>Heritage Action has a <strong>floor effect for Democrats</strong> — nearly all Dems score 0%, so it adds no information. Its weight drops to 2.7% for Democrats and rises to 17.3% for Republicans where it genuinely discriminates. LCV is the mirror: 13.6% for Democrats, 2.8% for Republicans.</p>
+    <p><strong>GovTrack confidence scaling</strong> — GovTrack's ideology score is derived from bill co-sponsorship patterns, which requires a critical mass of legislative activity to produce a reliable signal. A freshman with 10 bills has far less signal than a veteran with 300. GovTrack's weight is scaled by a sigmoid confidence curve based on each member's total bills introduced + unique cosponsors: near-zero activity (e.g. leadership members who don't sponsor bills, like Pelosi or Jordan) drops GovTrack's weight to ~2%; median activity (~150 actions) gives ~90% of full weight; high-activity members get the full 35%. This prevents a thin co-sponsorship record from pulling a member's composite score away from their voting record.</p>
+    <h3>Visual Encoding</h3>
+    <p><strong>X position</strong> → ideology (liberal ← → conservative). Physical distance from center = distance from ideological center. <strong>Dot size</strong> → Power Index (GovTrack leadership × bills × cosponsors × fundraising × seniority). <strong>Opacity</strong> → Source Consistency (how much the 5 sources agree). Transparent = sources disagree. Opaque = high confidence placement.</p>
+    <h3>Power Index</h3>
+    <p>Weighted combination of: GovTrack leadership score (25%), bills introduced (20%), unique cosponsors (15%), FEC fundraising (15%), seniority/votes cast (15%), formal role floor — Speaker=100, Leaders=90, Whips=80, Committee Chairs=85 (10%).</p>
+    <h3>Member History</h3>
+    <p>Click <strong>📈 View History</strong> on any member card. The chart shows <strong>Nokken-Poole scores</strong> (recalculated each Congress from that session's votes) on the X axis — same liberal↔conservative orientation as the main chart. Y axis = time, oldest at top. Orange dashed line = career DW-NOMINATE average. Blue line = per-session drift.</p>
+    <h3>Data Quality Notes</h3>
+    <p>Removed from dataset: David Joyce (retired 118th), Michael Waltz (NSA Director), Marco Rubio (Sec. State), JD Vance (VP), Raúl Grijalva (died Feb 2025). GovTrack data reflects 119th Congress. Heritage and LCV updated as votes are scored during session.</p>
+    <p style="margin-top:16px;font-size:11px;color:#6e7681">Data from VoteView (UCLA), GovTrack, Heritage Action, League of Conservation Voters, and FEC. All source data is publicly available. Refreshed weekly every Monday 6am PT.</p>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
