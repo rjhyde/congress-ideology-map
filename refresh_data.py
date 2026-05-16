@@ -29,6 +29,7 @@ DISPLAY_NAMES = {
     'B000944': 'Sherrod Brown',   'C000127': 'Maria Cantwell',
     'M001111': 'Patty Murray',    'P000145': 'Alex Padilla',
     'R000576': 'Dutch Ruppersberger',
+    'G000568': 'Morgan Griffith',
 }
 
 LEADERSHIP = {
@@ -146,41 +147,101 @@ except Exception as e:
 
 # ── 4. LCV ────────────────────────────────────────────────────────────────────
 print("Fetching LCV...")
-lcv_by_name = {}
+# Build bioguide→score map using pre-computed ID crosswalk
+# This avoids name-based matching entirely
+lcv_by_bioguide = {}
 try:
+    # Fetch LCV page
     html = fetch("https://scorecard.lcv.org/members-of-congress",
                  headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
                           "Accept": "text/html"})
+    # Extract slug→score from LCV
+    lcv_by_slug = {}
     for block in re.findall(r'<li class="congress-item">(.*?)</li>', html, re.DOTALL):
-        name_m  = re.search(r'class="card-link"[^>]*>([^<]+)</a>', block)
+        link_m  = re.search(r'href="https://www\.lcv\.org/moc/([^/]+)/"', block)
         score_m = re.search(r'class="data-score">\s*(\d+)%', block)
-        if name_m and score_m:
-            lcv_by_name[name_m.group(1).strip()] = int(score_m.group(1))
-    print(f"  LCV: {len(lcv_by_name)} members")
+        if link_m and score_m:
+            lcv_by_slug[link_m.group(1)] = int(score_m.group(1))
+
+    # Load legislator ID crosswalk (bioguide→slug via name matching done once)
+    # and build bioguide→score
+    leg_url = "https://unitedstates.github.io/congress-legislators/legislators-current.json"
+    legislators = json.loads(fetch(leg_url))
+
+    def make_lcv_slug(first, last):
+        name = f"{first}-{last}".lower()
+        name = re.sub(r"[^a-z0-9-]", "-", name)
+        return re.sub(r"-+", "-", name).strip("-")
+
+    lcv_by_last = {}
+    for slug, score in lcv_by_slug.items():
+        lcv_by_last.setdefault(slug.split('-')[-1], []).append((slug, score))
+
+    for leg in legislators:
+        bg = leg['id'].get('bioguide')
+        if not bg: continue
+        name = leg['name']
+        first, last, nick = name.get('first',''), name.get('last',''), name.get('nickname','')
+        # Try firstname-lastname slug variants
+        for fn in filter(None, [first, nick]):
+            slug = make_lcv_slug(fn, last)
+            if slug in lcv_by_slug:
+                lcv_by_bioguide[bg] = lcv_by_slug[slug]
+                break
+        if bg in lcv_by_bioguide: continue
+        # Fallback: last-name-only with first-initial disambiguation
+        last_norm = re.sub(r"[^a-z]", "", last.lower())
+        candidates = lcv_by_last.get(last_norm, [])
+        if len(candidates) == 1:
+            lcv_by_bioguide[bg] = candidates[0][1]
+        elif len(candidates) > 1:
+            fi = first[0].lower() if first else ''
+            ni = nick[0].lower() if nick else ''
+            for s, sc in candidates:
+                if s.startswith(fi) or (ni and s.startswith(ni)):
+                    lcv_by_bioguide[bg] = sc; break
+
+    print(f"  LCV: {len(lcv_by_bioguide)} members matched by ID")
 except Exception as e:
     print(f"  LCV error: {e} — using 0 matches")
 
 # ── 5. FEC ────────────────────────────────────────────────────────────────────
 print("Fetching FEC...")
-fec_by_name = {}
-for office in ['S', 'H']:
-    for page in range(1, 15):
-        url = f"https://api.open.fec.gov/v1/candidates/totals/?election_year=2024&office={office}&per_page=100&page={page}&api_key=DEMO_KEY"
-        try:
-            data = json.loads(fetch(url))
-            results = data.get('results', [])
-            if not results: break
-            for c in results:
-                fec_by_name[(c.get('name') or '').upper().strip()] = {
-                    'receipts': c.get('receipts') or 0,
-                    'state': c.get('state', ''),
-                }
-            time.sleep(0.3)
-        except Exception as e:
-            print(f"  FEC {office} p{page}: {e}")
-            time.sleep(2)
-            break
-print(f"  FEC: {len(fec_by_name)} candidates")
+# Use bioguide→FEC candidate ID crosswalk — no name matching
+fec_by_bioguide = {}
+try:
+    leg_url = "https://unitedstates.github.io/congress-legislators/legislators-current.json"
+    legislators_fec = json.loads(fetch(leg_url))
+    bg_to_fec_ids = {l['id']['bioguide']: l['id'].get('fec', [])
+                     for l in legislators_fec if l['id'].get('bioguide') and l['id'].get('fec')}
+
+    # Fetch FEC totals by office and map via candidate_id
+    fec_by_candidate_id = {}
+    for office in ['H', 'S']:
+        for page in range(1, 15):
+            url = f"https://api.open.fec.gov/v1/candidates/totals/?election_year=2024&office={office}&per_page=100&page={page}&api_key=DEMO_KEY"
+            try:
+                data = json.loads(fetch(url))
+                results = data.get('results', [])
+                if not results: break
+                for c in results:
+                    cid = c.get('candidate_id', '')
+                    if cid:
+                        fec_by_candidate_id[cid] = c.get('receipts') or 0
+                time.sleep(0.3)
+            except Exception as e:
+                print(f"  FEC {office} p{page}: {e}")
+                time.sleep(2); break
+
+    # Map bioguide → max receipts across all their FEC candidate IDs
+    for bg, fec_ids in bg_to_fec_ids.items():
+        receipts = max((fec_by_candidate_id.get(fid, 0) for fid in fec_ids), default=0)
+        if receipts > 0:
+            fec_by_bioguide[bg] = receipts
+
+    print(f"  FEC: {len(fec_by_bioguide)} members matched by ID")
+except Exception as e:
+    print(f"  FEC error: {e} — using 0 matches")
 
 # ── Merge ─────────────────────────────────────────────────────────────────────
 print("Merging sources...")
@@ -218,28 +279,12 @@ for m in vv:
     h_raw   = heritage_by_bg.get(bg)
     h_norm  = (h_raw * 2 - 1) if h_raw is not None else None
 
-    # LCV match by "Last, First" name
-    raw_name = m.get('bioname', '').strip()
-    lcv_score = None
-    if raw_name:
-        parts = raw_name.split(',')
-        if len(parts) >= 2:
-            last  = parts[0].strip().title()
-            first = parts[1].strip().split()[0].title() if parts[1].strip() else ''
-            for key in [f"{last}, {first}", last]:
-                if key in lcv_by_name:
-                    lcv_score = lcv_by_name[key]
-                    break
+    # LCV — look up by bioguide ID (no name matching)
+    lcv_score = lcv_by_bioguide.get(bg)
     lcv_norm = ((100 - lcv_score) / 50 - 1) if lcv_score is not None else None
 
-    # FEC
-    fec_receipts = None
-    fec_last = raw_name.split(',')[0].strip().upper() if raw_name else ''
-    state = m.get('state_abbrev', '').strip()
-    for fname, fdata in fec_by_name.items():
-        if fec_last and fec_last in fname and fdata.get('state', '') == state:
-            fec_receipts = fdata['receipts']
-            break
+    # FEC — look up by bioguide ID (no name matching)
+    fec_receipts = fec_by_bioguide.get(bg)
 
     # Adaptive weights with GovTrack confidence scaling
     conf  = gt_confidence(gt_bills, gt_cosps)
