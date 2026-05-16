@@ -43,7 +43,7 @@ LEADERSHIP = {
     'M001157': ('Appropriations Chair', 85),
 }
 
-REMOVE_BG = {'V000128', 'W000790'}  # Vance (VP), Waltz (NSA)
+REMOVE_BG = {'V000137', 'W000790'}  # Vance (VP), Waltz (NSA)
 
 def fetch(url, headers=None, timeout=30):
     req = urllib.request.Request(url, headers=headers or {'User-Agent': 'Mozilla/5.0'})
