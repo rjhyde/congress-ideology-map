@@ -18,8 +18,8 @@ PARTY_MAP = {
 DISPLAY_NAMES = {
     'M000355': 'Mitch McConnell', 'S000148': 'Chuck Schumer',
     'P000197': 'Nancy Pelosi',    'S000033': 'Bernie Sanders',
-    'W000817': 'Elizabeth Warren', 'J000295': 'Mike Johnson',
-    'J000032': 'Hakeem Jeffries', 'T000486': 'John Thune',
+    'W000817': 'Elizabeth Warren', 'J000299': 'Mike Johnson',
+    'J000294': 'Hakeem Jeffries', 'T000250': 'John Thune',
     'C001035': 'Susan Collins',   'M001153': 'Lisa Murkowski',
     'O000172': 'Alexandria Ocasio-Cortez', 'P000613': 'Jimmy Panetta',
     'A000371': 'Pete Aguilar',    'S001150': 'Adam Schiff',
@@ -32,18 +32,18 @@ DISPLAY_NAMES = {
 }
 
 LEADERSHIP = {
-    'J000295': ('Speaker', 100),
-    'J000032': ('Minority Leader', 90),
-    'T000486': ('Majority Leader', 90),
-    'S000148': ('Minority Leader (S)', 90),
-    'S001157': ('Majority Whip', 80),
-    'C001068': ('Minority Whip', 80),
-    'E000294': ('GOP Conference Chair', 70),
-    'A000370': ('Dem Caucus Chair', 70),
-    'M001157': ('Appropriations Chair', 85),
+    # Verified against GovTrack live data May 2026
+    'J000299': ('Speaker', 100),            # Mike Johnson (LA)
+    'J000294': ('Minority Leader', 90),     # Hakeem Jeffries (NY)
+    'T000250': ('Majority Leader', 90),     # John Thune (SD)
+    'S000148': ('Minority Leader (S)', 90), # Chuck Schumer (NY)
+    'S001176': ('Majority Whip', 80),       # Steve Scalise (LA)
+    'C001101': ('Minority Whip', 80),       # Katherine Clark (MA)
+    'M001136': ('GOP Conference Chair', 70),# Lisa McClain (MI)
+    'A000371': ('Dem Caucus Chair', 70),    # Pete Aguilar (CA)
 }
 
-REMOVE_BG = {'V000137', 'W000790'}  # Vance (VP), Waltz (NSA)
+REMOVE_BG = {'V000137'}  # JD Vance (VP) — W000790 is Warnock, Waltz has no current GovTrack record
 
 def fetch(url, headers=None, timeout=30):
     req = urllib.request.Request(url, headers=headers or {'User-Agent': 'Mozilla/5.0'})
