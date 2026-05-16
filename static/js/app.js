@@ -183,7 +183,7 @@ function renderChart() {
       if (activeSpotlight) {
         const group = SPOTLIGHTS[activeSpotlight];
         const inGroup = group && group.members.includes(d.member.bioguide_id);
-        return inGroup ? 1.0 : 0.06;
+        return inGroup ? 1.0 : 0.35;
       }
       if (searchQuery && !matchesSearch(d.member)) return 0.08;
       return d.member.opacity !== undefined ? d.member.opacity : 0.85;
@@ -619,10 +619,25 @@ function getVisibleMembers() {
   return ALL_MEMBERS.filter(m => m.chamber === (currentChamber === 'house' ? 'House' : 'Senate'));
 }
 
+function updateSpotlightVisibility() {
+  const chamber = currentChamber === 'house' ? 'House' : 'Senate';
+  document.querySelectorAll('.spotlight-btn').forEach(btn => {
+    const chambers = btn.dataset.chambers || 'House,Senate';
+    const applies = chambers.includes(chamber);
+    btn.style.display = applies ? '' : 'none';
+    // If active spotlight no longer applies, clear it
+    if (!applies && activeSpotlight === btn.dataset.key) {
+      activeSpotlight = null;
+      btn.classList.remove('active');
+    }
+  });
+}
+
 function switchChamber(c) {
   currentChamber = c;
   document.getElementById('btn-house').classList.toggle('active', c === 'house');
   document.getElementById('btn-senate').classList.toggle('active', c === 'senate');
+  updateSpotlightVisibility();
   document.getElementById('chamber-label').textContent =
     c === 'house' ? 'House of Representatives' : 'Senate';
   selectedMember = null;
@@ -656,14 +671,18 @@ function buildSpotlightBar(spotlights) {
     btn.style.setProperty('--spot-color', group.color);
     btn.dataset.key = key;
 
-    btn.addEventListener('mouseenter', () => {
-      activeSpotlight = key;
-      btn.classList.add('active');
-      renderChart();
-    });
-    btn.addEventListener('mouseleave', () => {
-      activeSpotlight = null;
-      btn.classList.remove('active');
+    btn.dataset.chambers = (group.chambers || ['House','Senate']).join(',');
+    btn.addEventListener('click', () => {
+      const isActive = activeSpotlight === key;
+      // Clear all buttons
+      bar.querySelectorAll('.spotlight-btn').forEach(b => b.classList.remove('active'));
+      // Toggle
+      if (isActive) {
+        activeSpotlight = null;
+      } else {
+        activeSpotlight = key;
+        btn.classList.add('active');
+      }
       renderChart();
     });
 
@@ -681,6 +700,7 @@ async function init() {
     ALL_MEMBERS = await membersRes.json();
     SPOTLIGHTS  = await spotlightsRes.json();
     buildSpotlightBar(SPOTLIGHTS);
+    updateSpotlightVisibility();
     const info = await refreshRes.json();
 
     const badge = document.getElementById('refresh-badge');
