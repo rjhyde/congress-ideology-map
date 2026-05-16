@@ -39,6 +39,16 @@ def api_history(bioguide_id: str):
     return jsonify(get_history(bioguide_id))
 
 
+@app.route("/api/spotlights")
+def api_spotlights():
+    import json, os
+    path = "/home/user/work/data/spotlights.json"
+    if os.path.exists(path):
+        with open(path) as f:
+            return jsonify(json.load(f))
+    return jsonify({})
+
+
 @app.route("/health")
 def health():
     members = get_members()

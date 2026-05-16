@@ -130,3 +130,10 @@ header{padding:14px 20px 10px;border-bottom:1px solid #21262d;display:flex;align
 .roster-meta{font-size:10px;color:#6e7681;white-space:nowrap}
 .roster-score{font-size:11px;font-weight:600;color:#8b949e;white-space:nowrap;font-variant-numeric:tabular-nums}
 #roster-search:focus{border-color:#1f6feb}
+
+/* ── Spotlight bar ── */
+.spotlight-bar{display:flex;align-items:center;gap:8px;padding:6px 20px;border-bottom:1px solid #21262d;background:#0d1117;flex-wrap:wrap}
+.spotlight-label{font-size:11px;color:#6e7681;font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.spotlight-btn{background:#161b22;border:1px solid #30363d;color:#8b949e;padding:4px 12px;border-radius:12px;font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.spotlight-btn:hover{color:#f0f6fc;border-color:var(--spot-color, #58a6ff);box-shadow:0 0 0 1px var(--spot-color, #58a6ff);background:#161b22}
+.spotlight-btn.active{color:#f0f6fc;border-color:var(--spot-color, #58a6ff);background:color-mix(in srgb, var(--spot-color, #58a6ff) 15%, transparent)}

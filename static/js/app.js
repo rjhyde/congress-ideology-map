@@ -8,6 +8,8 @@ let currentChamber = 'house';
 let currentScore = 'enhanced';
 let selectedMember = null;
 let searchQuery = '';
+let SPOTLIGHTS = {};       // loaded from /api/spotlights
+let activeSpotlight = null; // key of hovered spotlight group
 
 // ── Color ────────────────────────────────────────────────────────────────────
 function ideologyColor(score) {
@@ -177,6 +179,12 @@ function renderChart() {
     .attr('fill', d => ideologyColor(getScore(d.member)))
     .attr('opacity', d => {
       if (d.member.is_delegate) return 0.45;
+      // Spotlight mode: dim non-members, brighten members
+      if (activeSpotlight) {
+        const group = SPOTLIGHTS[activeSpotlight];
+        const inGroup = group && group.members.includes(d.member.bioguide_id);
+        return inGroup ? 1.0 : 0.06;
+      }
       if (searchQuery && !matchesSearch(d.member)) return 0.08;
       return d.member.opacity !== undefined ? d.member.opacity : 0.85;
     })
@@ -202,6 +210,25 @@ function renderChart() {
       renderChart();
       showMemberCard(d.member);
     });
+
+  // Spotlight rings — draw a halo around all members in the active group
+  if (activeSpotlight) {
+    const group = SPOTLIGHTS[activeSpotlight];
+    if (group) {
+      const groupSet = new Set(group.members);
+      positions.filter(p => groupSet.has(p.member.bioguide_id)).forEach(pos => {
+        const r = powerScale(pos.member.power_index || 0);
+        svg.append('circle')
+          .attr('cx', pos.x).attr('cy', pos.y)
+          .attr('r', r + 3)
+          .attr('fill', 'none')
+          .attr('stroke', group.color)
+          .attr('stroke-width', 1.5)
+          .attr('opacity', 0.9)
+          .style('pointer-events', 'none');
+      });
+    }
+  }
 
   // Selection rings
   if (selectedMember) {
@@ -616,13 +643,44 @@ function switchScore(val) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+function buildSpotlightBar(spotlights) {
+  const bar = document.getElementById('spotlight-bar');
+  if (!bar) return;
+  // Remove existing buttons (keep label)
+  bar.querySelectorAll('.spotlight-btn').forEach(b => b.remove());
+
+  Object.entries(spotlights).forEach(([key, group]) => {
+    const btn = document.createElement('button');
+    btn.className = 'spotlight-btn';
+    btn.textContent = group.label;
+    btn.style.setProperty('--spot-color', group.color);
+    btn.dataset.key = key;
+
+    btn.addEventListener('mouseenter', () => {
+      activeSpotlight = key;
+      btn.classList.add('active');
+      renderChart();
+    });
+    btn.addEventListener('mouseleave', () => {
+      activeSpotlight = null;
+      btn.classList.remove('active');
+      renderChart();
+    });
+
+    bar.appendChild(btn);
+  });
+}
+
 async function init() {
   try {
-    const [membersRes, refreshRes] = await Promise.all([
+    const [membersRes, refreshRes, spotlightsRes] = await Promise.all([
       fetch('/api/members'),
       fetch('/api/last-refresh'),
+      fetch('/api/spotlights'),
     ]);
     ALL_MEMBERS = await membersRes.json();
+    SPOTLIGHTS  = await spotlightsRes.json();
+    buildSpotlightBar(SPOTLIGHTS);
     const info = await refreshRes.json();
 
     const badge = document.getElementById('refresh-badge');
