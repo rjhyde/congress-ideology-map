@@ -550,7 +550,11 @@ function updateStats(members) {
 let _rosterQuery = '';
 
 function renderMemberList() {
-  const members = getVisibleMembers();
+  let members = getVisibleMembers();
+  if (activeSpotlight && SPOTLIGHTS[activeSpotlight]) {
+    const ids = new Set(SPOTLIGHTS[activeSpotlight].members);
+    members = members.filter(m => ids.has(m.bioguide_id));
+  }
   const sorted = [...members].sort((a, b) => getScore(a) - getScore(b));
   _renderRoster(sorted, _rosterQuery);
 }
@@ -684,6 +688,7 @@ function buildSpotlightBar(spotlights) {
         btn.classList.add('active');
       }
       renderChart();
+      renderMemberList();
     });
 
     bar.appendChild(btn);
