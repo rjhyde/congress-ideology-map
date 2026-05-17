@@ -42,9 +42,9 @@ def api_history(bioguide_id: str):
 @app.route("/api/spotlights")
 def api_spotlights():
     import json, os
-    path = "/home/user/work/data/spotlights.json"
-    if os.path.exists(path):
-        with open(path) as f:
+    from config import SPOTLIGHTS_PATH
+    if os.path.exists(SPOTLIGHTS_PATH):
+        with open(SPOTLIGHTS_PATH) as f:
             return jsonify(json.load(f))
     return jsonify({})
 
